@@ -2,12 +2,14 @@
 
 Aplicación interactiva y reproducible para segmentación y descubrimiento de patrones en datos no etiquetados mediante algoritmos de agrupamiento (*Clustering*), desarrollada con **scikit-learn**, desplegada con **Streamlit**, empaquetada con **Docker** y alojada en **Google Cloud Platform (GCP - Compute Engine)**.
 
+> 📌 **Plan de Trabajo y Colaboración:** Consulta el documento detallado de división de roles y arquitectura agnóstica en [PLAN_DE_IMPLEMENTACION.md](file:///C:/Users/camor/.gemini/antigravity-ide/scratch/Reto-completo-Machine-2/PLAN_DE_IMPLEMENTACION.md).
+
 ---
 
 ## 👥 Autores
-- **Integrante 1:** [Nombre y Apellidos] - [Correo / Usuario GitHub]
-- **Integrante 2:** [Nombre y Apellidos] - [Correo / Usuario GitHub]
-- **Institución:** Universidad / Curso de Machine Learning 2
+- **Integrante 1 (ML & Pipeline):** [Nombre y Apellidos] - [Correo / Usuario GitHub]
+- **Integrante 2 (Frontend & DevOps):** [Nombre y Apellidos] - [Correo / Usuario GitHub]
+- **Institución:** Curso de Machine Learning 2
 
 ---
 
