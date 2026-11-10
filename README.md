@@ -2,7 +2,7 @@
 
 Aplicación interactiva y reproducible para segmentación y descubrimiento de patrones en datos no etiquetados mediante algoritmos de agrupamiento (*Clustering*), desarrollada con **scikit-learn**, desplegada con **Streamlit**, empaquetada con **Docker** y alojada en **Google Cloud Platform (GCP - Compute Engine)**.
 
-> 📌 **Plan de Trabajo y Colaboración:** Consulta el documento detallado de división de roles y arquitectura agnóstica en [PLAN_DE_IMPLEMENTACION.md](file:///C:/Users/camor/.gemini/antigravity-ide/scratch/Reto-completo-Machine-2/PLAN_DE_IMPLEMENTACION.md).
+> 📌 **Plan de Trabajo y Colaboración:** Consulta el documento detallado de división de roles y arquitectura agnóstica en [PLAN_DE_IMPLEMENTACION.md](PLAN_DE_IMPLEMENTACION.md).
 
 ---
 
@@ -24,31 +24,36 @@ Aplicación interactiva y reproducible para segmentación y descubrimiento de pa
 
 > Este proyecto está diseñado para ser **agnóstico al dataset**. Puede ser utilizado con cualquier conjunto de datos tabular (por ejemplo: clientes, transacciones, registros clínicos, sensores, etc.).
 
-- **Dataset utilizado:** `[Nombre del Dataset o Fuente, ej. Segmentación de Clientes / Métricas de Uso]`
-- **Ruta de almacenamiento local:** `data/datos.csv`
-- **Unidad de observación:** `[Definir qué representa exactamente una fila, ej. Un cliente único registrado / Una sesión de usuario / Una transacción]`
-- **Tamaño aproximado:** `[N° de filas] filas × [N° de columnas] columnas`.
-- **Formato esperado:** Archivo CSV separado por comas o punto y coma (`data/datos.csv`). Si el dataset contiene identificadores (IDs) o columnas no informativas, se excluyen durante el pipeline.
+- **Dataset utilizado:** `LEGO Minifigures 1975–2025` — Catálogo exhaustivo de minifiguras de LEGO extraído de [Rebrickable](https://rebrickable.com/).
+- **Ruta de almacenamiento local:** `data/datos.csv` (copia de `lego_minifigures_1975_2025.csv`)
+- **Unidad de observación:** Cada fila representa **una minifigura única** identificada por su código de inventario (`fig_num`).
+- **Tamaño:** `15,790 filas × 5 columnas`.
+- **Formato esperado:** Archivo CSV separado por comas. Las columnas no numéricas o identificadores (`fig_num`, `name`, `img_url`) son excluidas automáticamente durante el pipeline.
 
 ---
 
 ## 🔀 3. Ruta Elegida
 
 - **Ruta B: Aprendizaje No Supervisado (Clustering)**
-- **Justificación:** Los datos no cuentan con una variable objetivo (*target* o etiqueta predefinida). El objetivo primordial es el aprendizaje estructural para agrupar instancias con características similares e identificar comportamientos o arquetipos representativos.
+- **Justificación:** Los datos no cuentan con una variable objetivo (*target* o etiqueta predefinida). El objetivo primordial es el aprendizaje estructural para agrupar instancias con características similares e identificar comportamientos o arquetipos representativos dentro del catálogo de minifiguras.
 
 ---
 
 ## 🧩 4. Variables Utilizadas
 
-El pipeline procesa dinámicamente las variables relevantes definidas para el análisis de agrupamiento:
+El pipeline detecta automáticamente las variables numéricas relevantes del dataset de LEGO:
 
-| Nombre de la Variable | Tipo de Dato | Rol / Justificación | Rango / Valores Comunes |
+| Nombre de la Variable | Tipo de Dato | Rol / Justificación | Rango / Valores |
 | :--- | :--- | :--- | :--- |
-| `[variable_1]` (ej. `edad` o `monto`) | Numérica Continua | Factor de escala de magnitud del individuo | `[min - max]` |
-| `[variable_2]` (ej. `frecuencia`) | Numérica Discreta | Mide recurrencia o intensidad de actividad | `[min - max]` |
-| `[variable_3]` (ej. `antiguedad`) | Numérica Continua | Mide fidelidad / tiempo de exposición | `[min - max]` |
-| `[variable_k]` (ej. `categoria_preferida`) | Categórica (opcional) | Segmentación por preferencia o atributo cualitativo | `[Cat A, Cat B, ...]` |
+| `num_parts` | Numérica Discreta | Número de piezas que componen la minifigura. Mide la complejidad física del modelo. | `2 – 143` (media: 4.90, mediana: 4.0) |
+| `total_sets_appeared` | Numérica Discreta | Cantidad total de sets de LEGO en los que aparece la minifigura. Mide la ubicuidad/popularidad. | `1 – 41` (media: 1.40, mediana: 1.0) |
+
+**Variables excluidas automáticamente:**
+| Variable | Motivo de Exclusión |
+| :--- | :--- |
+| `fig_num` | Identificador único (no aporta información numérica para clustering) |
+| `name` | Texto descriptivo de la minifigura |
+| `img_url` | URL de imagen (campo no numérico) |
 
 *(Nota: En clustering se priorizan variables numéricas continuas/discretas normalizadas para evitar distorsiones en el cálculo de distancias euclidianas).*
 
@@ -60,22 +65,44 @@ Para garantizar la reproducibilidad y prevenir la fuga de información (*data le
 
 1. **Tratamiento de Valores Faltantes (Imputación):**
    - Variables numéricas: Imputación por mediana (`SimpleImputer(strategy='median')`) para mitigar el impacto de valores atípicos (*outliers*).
-   - Variables categóricas (si aplica): Imputación por valor más frecuente o categoría constante (`'desconocido'`).
+   - El dataset actual no presenta valores faltantes (0 NaN en las 5 columnas), pero el pipeline está diseñado para manejarlos si se cambia el dataset.
 2. **Escalamiento y Normalización:**
-   - Estandarización de variables numéricas con `StandardScaler` ($\mu=0, \sigma=1$) o `RobustScaler`. Esto es indispensable ya que algoritmos como K-Means basan su optimización en distancias geométricas (euclidianas).
-3. **Codificación Categórica (Opcional):**
-   - Variables categóricas procesadas mediante `OneHotEncoder(handle_unknown='ignore')` a través de `ColumnTransformer`.
+   - Estandarización de variables numéricas con `StandardScaler` ($\mu=0, \sigma=1$). Esto es indispensable ya que `num_parts` (rango 2–143) y `total_sets_appeared` (rango 1–41) tienen escalas diferentes, y K-Means basa su optimización en distancias euclidianas.
+3. **Detección Automática de Features:**
+   - El script `train.py` identifica automáticamente las columnas numéricas, excluyendo campos de tipo texto, URLs e identificadores únicos.
+
+**Estructura del Pipeline en código:**
+```python
+Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler", StandardScaler()),
+    ("cluster", KMeans(n_clusters=3, random_state=42, n_init=10)),
+])
+```
 
 ---
 
 ## 🧠 6. Modelo de Agrupamiento y Justificación
 
-- **Algoritmo seleccionado:** **K-Means** (o *Gaussian Mixture Models* / *DBSCAN* según el caso).
+- **Algoritmo seleccionado:** **K-Means**
 - **Justificación del modelo:**
   - K-Means ofrece alta eficiencia computacional $O(k \cdot n \cdot d)$, facilidad de convergencia y rápida inferencia en producción para asignar nuevas observaciones al centroide más cercano.
-  - La interpretabilidad de los centroides permite generar perfiles de clúster directamente traducibles a reglas o descripciones de negocio.
+  - La interpretabilidad de los centroides permite generar perfiles de clúster directamente traducibles a descripciones de negocio / catálogo.
 - **Selección de hiperparámetros:**
-  - Número de clusters ($k$): Determinado mediante el análisis del **Método del Codo (*Elbow Method*)** analizando la inercia y validado con el coeficiente de silueta.
+  - Número de clusters ($k = 3$): Determinado mediante el análisis del **Método del Codo (*Elbow Method*)** analizando la inercia y validado con el coeficiente de silueta.
+
+### Evaluación de $k$ óptimo (Método del Codo y Silueta)
+
+| $k$ | Inercia (WCSS) | Coeficiente de Silueta | Índice Davies-Bouldin |
+| :---: | ---: | ---: | ---: |
+| 2 | 21,334.98 | **0.9061** | 0.4394 |
+| 3 | 13,274.56 | **0.8287** | 0.5725 |
+| 4 | 9,155.33 | 0.7699 | 0.5132 |
+| 5 | 6,999.15 | 0.7854 | 0.5276 |
+| 6 | 5,659.73 | 0.7123 | 0.5669 |
+| 7 | 4,371.70 | 0.7148 | 0.5024 |
+
+> **Decisión:** Se eligió $k = 3$ porque ofrece el mejor balance entre separabilidad (Silueta = 0.83, excelente) y granularidad interpretativa. Con $k = 2$ la silueta es mayor (0.91) pero solo genera dos grupos demasiado genéricos. Con $k = 3$ se obtienen tres perfiles bien diferenciados y relevantes para el análisis del catálogo LEGO.
 
 ---
 
@@ -83,14 +110,14 @@ Para garantizar la reproducibilidad y prevenir la fuga de información (*data le
 
 En el aprendizaje no supervisado no existen matrices de confusión directas; la calidad de los clusters se evalúa combinando criterios intrínsecos de separación y cohesión:
 
-1. **Coeficiente de Silueta (*Silhouette Score*):**
-   - Mide qué tan similar es un objeto a su propio clúster en comparación con otros clústeres (rango $[-1, 1]$). Valores superiores a 0.35–0.50 indican separación estructural aceptable.
-2. **Inercia (*Within-Cluster Sum of Squares* - WCSS):**
-   - Suma de distancias cuadráticas de las muestras a su centroide más cercano.
-3. **Índice de Davies-Bouldin / Calinski-Harabasz (opcional):**
-   - Métricas complementarias de dispersión intra-clúster y separación inter-clúster.
-4. **Coherencia e Interpretabilidad de Negocio:**
-   - Validación empírica de que los perfiles resultantes presentan diferencias estadísticas significativas en sus medias/medianas.
+### Métricas del modelo final ($k = 3$):
+
+| Métrica | Valor | Interpretación |
+| :--- | ---: | :--- |
+| **Coeficiente de Silueta** | **0.8287** | Excelente separación (rango $[-1, 1]$; > 0.50 se considera bueno) |
+| **Inercia (WCSS)** | 13,274.56 | Suma de distancias cuadráticas intra-clúster |
+| **Índice Davies-Bouldin** | 0.5725 | Buena compacidad y separación (menor es mejor) |
+| **Índice Calinski-Harabasz** | 10,885.03 | Alta varianza inter-clúster vs intra-clúster (mayor es mejor) |
 
 ---
 
@@ -98,11 +125,19 @@ En el aprendizaje no supervisado no existen matrices de confusión directas; la 
 
 El entrenamiento genera perfiles estadísticos promedio de cada grupo. Al predecir sobre una nueva entrada, la aplicación no solo retorna un número de clúster, sino su **descripción cualitativa**:
 
-| Clúster | Nombre del Perfil | Interpretación / Características Clave |
-| :---: | :--- | :--- |
-| **0** | **Perfil Base / Estándar** | Valores promedio en todas las variables analizadas. |
-| **1** | **Perfil Alto Valor / Intensivo** | Valores altos en frecuencia e intensidad; grupo prioritario. |
-| **2** | **Perfil Esporádico / Ocasional** | Baja recurrencia, montos moderados o registros recientes. |
+| Clúster | Nombre del Perfil | Tamaño | Interpretación / Características Clave |
+| :---: | :--- | :--- | :--- |
+| **0** | **Minifiguras Estándar / Sets Especiales** | 14,984 (94.9%) | Figuras convencionales con ~4.6 partes, distribuidas en 1–2 sets únicos. Representan la gran mayoría del catálogo. |
+| **1** | **Minifiguras Complejas / MOCs de Gran Escala** | 162 (1.0%) | Figuras con promedio de 36.2 piezas (muy por encima de la media), presentes en pocos sets (~1.1). Modelos de alta complejidad. |
+| **2** | **Minifiguras Icónicas / Ubicuas** | 644 (4.1%) | Piezas estándar (~4.5 partes) pero con altísima presencia transversal: aparecen en 6.1 sets en promedio (hasta 41). Son las figuras más populares y recurrentes. |
+
+### Perfiles numéricos detallados por clúster:
+
+| Clúster | `num_parts` (media) | `total_sets_appeared` (media) |
+| :---: | ---: | ---: |
+| 0 | 4.58 | 1.20 |
+| 1 | 36.20 | 1.06 |
+| 2 | 4.46 | 6.11 |
 
 ---
 
@@ -110,15 +145,17 @@ El entrenamiento genera perfiles estadísticos promedio de cada grupo. Al predec
 
 ```text
 .
-├── app.py                     # Interfaz web interactiva en Streamlit
+├── app.py                     # Interfaz web interactiva en Streamlit (Integrante 2)
 ├── train.py                   # Script de entrenamiento, evaluación y exportación del modelo
 ├── model.joblib               # Artefacto serializado (modelo, features y perfiles)
-├── requirements.txt           # Dependencias fijadas del proyecto
-├── Dockerfile                 # Definición de la imagen del contenedor
-├── .dockerignore              # Archivos excluidos del build de Docker
+├── requirements.txt           # Dependencias fijadas del proyecto (Integrante 2)
+├── Dockerfile                 # Definición de la imagen del contenedor (Integrante 2)
+├── .dockerignore              # Archivos excluidos del build de Docker (Integrante 2)
 ├── README.md                  # Documentación completa y guía de reproducción
+├── PLAN_DE_IMPLEMENTACION.md  # Plan de roles, arquitectura y estrategia de Git
+├── lego_minifigures_1975_2025.csv  # Dataset original de minifiguras
 └── data/                      # Directorio de datos
-    └── datos.csv              # Dataset de entrada
+    └── datos.csv              # Dataset de entrada (copia del CSV original)
 ```
 
 ---
@@ -160,11 +197,22 @@ El entrenamiento genera perfiles estadísticos promedio de cada grupo. Al predec
 4. **Entrenar el modelo (`train.py`):**
    Asegúrese de que el archivo `data/datos.csv` esté en su lugar y ejecute:
    ```bash
+   # Entrenamiento estándar con k=3
    python train.py
+
+   # Con evaluación de k=2..7 (tabla comparativa de métricas)
+   python train.py --evaluate-k
+
+   # Con otro dataset y otro número de clusters
+   python train.py --data ruta/a/otro.csv --k 4
+
+   # Especificando features manualmente
+   python train.py --features "edad,ingreso,frecuencia" --k 5
    ```
    *Salida esperada:*
-   - Mensaje con la métrica de evaluación (ej. `Silhouette Score: 0.54`).
-   - Tabla de perfilamiento de clusters impresa en consola.
+   - Tabla de evaluación de k (si se usa `--evaluate-k`).
+   - Métricas de evaluación: Silhouette Score, Inercia, Davies-Bouldin, Calinski-Harabasz.
+   - Tabla de perfilamiento interpretativo de cada clúster.
    - Creación del archivo `model.joblib`.
 
 5. **Iniciar la aplicación interactiva de Streamlit (`app.py`):**
@@ -255,25 +303,59 @@ El entrenamiento genera perfiles estadísticos promedio de cada grupo. Al predec
 ### Entrada de prueba en la interfaz:
 | Parámetro | Valor de Entrada |
 | :--- | :--- |
-| Variable 1 (`edad` / `magnitud_1`) | `34.0` |
-| Variable 2 (`ingreso` / `magnitud_2`) | `4500.0` |
-| Variable 3 (`frecuencia` / `magnitud_3`) | `12` |
-| Variable 4 (`ticket_promedio` / `magnitud_4`) | `150.5` |
+| `num_parts` (Número de piezas) | `4` |
+| `total_sets_appeared` (Sets en que aparece) | `1` |
 
 ### Salida generada por el modelo:
-- **Resultado asignado:** `Clúster 1`
-- **Etiqueta descriptiva:** `Perfil Alto Valor / Intensivo`
+- **Resultado asignado:** `Clúster 0`
+- **Etiqueta descriptiva:** `Minifiguras Estándar / Sets Especiales`
 - **Detalle de la asignación:**
-  > *"Esta observación presenta valores superiores al percentil 75 en frecuencia y consumo, correspondiendo al segmento de clientes altamente fidelizados."*
-- **Visualización:** Gráfico interactivo que sitúa la nueva observación respecto a los centroides del modelo.
+  > *"Perfil Estándar y Específico: figuras convencionales (4.6 partes) distribuidas en 1 o 2 sets únicos (1.2 sets). Representa la gran mayoría del catálogo: 94.9% (14,984 figuras)."*
+
+### Otros ejemplos de predicción:
+| `num_parts` | `total_sets_appeared` | Clúster Asignado | Perfil |
+| ---: | ---: | :---: | :--- |
+| 4 | 1 | 0 | Minifiguras Estándar |
+| 40 | 1 | 1 | Minifiguras Complejas |
+| 4 | 20 | 2 | Minifiguras Icónicas |
 
 ---
 
 ## 🔄 12. Procedimiento para Adaptar a un Nuevo Dataset
 
 Para utilizar este pipeline con cualquier otro dataset:
-1. Coloque su archivo en `data/datos.csv`.
-2. Abra `train.py` y ajuste la lista de columnas en `numeric_features` (y `categorical_features` si aplica).
-3. Ajuste el número de clústeres `n_clusters` según la necesidad o gráfica del codo.
-4. Ejecute `python train.py` para regenerar `model.joblib`.
-5. Ejecute `streamlit run app.py` (o reconstruya la imagen Docker): la interfaz tomará automáticamente los nuevos campos y rangos sin modificar el frontend.
+1. Coloque su archivo CSV en `data/datos.csv`.
+2. Ejecute `python train.py --evaluate-k` para ver las métricas y elegir el $k$ adecuado.
+3. Ejecute `python train.py --k <valor_elegido>` para regenerar `model.joblib`.
+4. Ejecute `streamlit run app.py` (o reconstruya la imagen Docker): la interfaz tomará automáticamente los nuevos campos y rangos sin modificar el frontend.
+
+> **Nota:** No es necesario modificar el código fuente de `train.py` ni de `app.py`. El pipeline detecta automáticamente las columnas numéricas y genera los controles de forma dinámica.
+
+---
+
+## 📦 13. Contrato del Artefacto (`model.joblib`)
+
+El archivo `model.joblib` contiene un diccionario Python con la siguiente estructura estándar, que funciona como **contrato** entre el Integrante 1 (ML) y el Integrante 2 (Frontend):
+
+```python
+{
+    "model": Pipeline,                # Pipeline completo de sklearn (imputer+scaler+kmeans)
+    "features": List[str],            # Lista de variables usadas en el entrenamiento
+    "numeric_features": List[str],    # Alias de features (compatibilidad)
+    "categorical_features": List,     # Variables categóricas (vacía en este caso)
+    "feature_stats": {                # Estadísticas por variable para generar sliders
+        "num_parts": {"min": 2.0, "max": 143.0, "mean": 4.9, "median": 4.0, ...},
+        "total_sets_appeared": {"min": 1.0, "max": 41.0, "mean": 1.4, "median": 1.0, ...}
+    },
+    "task": "clustering",
+    "k": 3,
+    "silhouette_score": 0.8287,
+    "inertia": 13274.56,
+    "davies_bouldin_score": 0.5725,
+    "calinski_harabasz_score": 10885.03,
+    "cluster_descriptions": {0: "...", 1: "...", 2: "..."},
+    "cluster_profiles": {0: {...}, 1: {...}, 2: {...}},
+    "dataset_name": "datos.csv",
+    "total_samples": 15790
+}
+```
