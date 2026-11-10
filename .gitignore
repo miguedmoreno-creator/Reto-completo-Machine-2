@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints
+.env
+*.log
+*.pdf
+*(in)*
+RESENA_TRABAJO_COMPANERO_SANTIAGO.md
