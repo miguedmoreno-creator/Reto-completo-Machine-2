@@ -1,14 +1,20 @@
 # Proyecto de Machine Learning: Ruta B - Aprendizaje No Supervisado (Clustering)
 
-Aplicación interactiva y reproducible para segmentación y descubrimiento de patrones en datos no etiquetados mediante algoritmos de agrupamiento (*Clustering*), desarrollada con **scikit-learn**, desplegada con **Streamlit**, empaquetada con **Docker** y alojada en **Google Cloud Platform (GCP - Compute Engine)**.
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://miguedmoreno-creator-reto-completo-machine-2-app-iqszqk.streamlit.app)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg)](https://www.docker.com/)
 
-> 📌 **Plan de Trabajo y Colaboración:** Consulta el documento detallado de división de roles y arquitectura agnóstica en [PLAN_DE_IMPLEMENTACION.md](PLAN_DE_IMPLEMENTACION.md).
+Aplicación interactiva y reproducible para segmentación y descubrimiento de patrones en datos no etiquetados mediante algoritmos de agrupamiento (*Clustering*), desarrollada con **scikit-learn**, desplegada con **Streamlit**, empaquetada con **Docker** y disponible en vivo.
+
+> 🌐 **Aplicación en Vivo (Streamlit Cloud):** [https://miguedmoreno-creator-reto-completo-machine-2-app-iqszqk.streamlit.app](https://miguedmoreno-creator-reto-completo-machine-2-app-iqszqk.streamlit.app)  
+> 📌 **Plan de Trabajo y Colaboración:** [PLAN_DE_IMPLEMENTACION.md](PLAN_DE_IMPLEMENTACION.md)  
+> 📋 **Acta de Prueba Cruzada Realizada por la Pareja Externa:** [reseña_trabajo_Moreno_y_Duarte.md](reseña_trabajo_Moreno_y_Duarte.md)
 
 ---
 
 ## 👥 Autores
-- **Integrante 1 (ML & Pipeline):** [Nombre y Apellidos] - [Correo / Usuario GitHub]
-- **Integrante 2 (Frontend & DevOps):** [Nombre y Apellidos] - [Correo / Usuario GitHub]
+- **Integrante 1 (ML & Pipeline):** Miguel Moreno - [`@miguedmoreno-creator`](https://github.com/miguedmoreno-creator)
+- **Integrante 2 (Frontend & DevOps):** Julián Duarte
 - **Institución:** Curso de Machine Learning 2
 
 ---
